@@ -5,6 +5,7 @@ A simple game of single deck blackjack.
 Feel free to do with it as you wish, it's for fun.
 
 To Do:
+* Dealer incorrectly stands with a soft total when player stands. It's not good.
 * Fix soft totals when multiple Aces are in player's hand
 * Add Double Downs
 * Add Split hands
