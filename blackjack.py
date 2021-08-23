@@ -174,7 +174,7 @@ class Game:
     def player_hit(self):
         """ Player hits for a card """
         if len(self.deck1.cards) == 0:
-            self.shuffle()
+            self.dealer_shuffle()
 
         self.p_cards.append(self.deck1.cards.pop())
         self.set_totals()
@@ -193,7 +193,7 @@ class Game:
         self.print_totals()
         while (self.d_total < 17 and self.d_soft_total <= 17):
             if len(self.deck1.cards) == 0:
-                self.shuffle()
+                self.dealer_shuffle()
             self.d_cards.append(self.deck1.cards.pop())
             self.set_totals()
             self.check_bust_d()
