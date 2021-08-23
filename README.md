@@ -8,6 +8,6 @@ To Do:
 * Fix soft totals when multiple Aces are in player's hand
 * Add Double Downs
 * Add Split hands
-* Add rules configuration - muli deck, dealer stand/hits soft 17, Double After Splitting, etc.
+* Add rules configuration - multi deck, change starting bankroll, dealer stand/hits soft 17, Double after splitting, etc.
 * Make output prettier
 * Make pylint stop yelling at me about my code
