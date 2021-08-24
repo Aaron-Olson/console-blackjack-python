@@ -8,7 +8,7 @@ from random import shuffle
 
 class Deck:
     """ A deck of cards """
-    
+
     def __init__(self):
         self.suites = ['\u2660', '\u2663', '\u2665', '\u2666']
         self.values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'K', 'Q', 'J', 'A']
@@ -41,10 +41,8 @@ class Game:
         self.d_cards = []
 
 
-        self.p_total = 0
-        self.d_total = 0
-        self.p_soft_total = 0
-        self.d_soft_total = 0
+        self.p_total = [0, 0]
+        self.d_total = [0, 0]
 
         self.p_bj = False
         self.p_money = 10000
@@ -75,7 +73,7 @@ class Game:
     def deal(self):
         """ Dealing prodecure for each round of cards dealts """
         self.hand_end = False
-        if len(self.deck1.cards) < 4:
+        if len(self.deck1.cards) < 13: # cut card, 75% deck pen
             self.dealer_shuffle()
 
 
@@ -83,17 +81,17 @@ class Game:
         self.d_cards.append(self.deck1.cards.pop())
         self.p_cards.append(self.deck1.cards.pop())
         self.d_cards.append(self.deck1.cards.pop())
-        self.set_totals()
+        self.set_totals(self.p_cards,self.p_total)
+        self.set_totals(self.d_cards,self.d_total)
         self.print_visible_cards()
-        #self.print_totals()
 
-        if (self.p_total == 21 and self.d_total != 21):
+        if (self.p_total[0] == 21 and self.d_total[0] != 21):
             self.player_win()
             self.p_bj = True
-        elif (self.d_total == 21 and self.p_total != 21):
+        elif (self.d_total[0] == 21 and self.p_total[0] != 21):
             self.dealer_win()
             self.p_bj = False
-        elif (self.d_total == 21 and self.p_total == 21):
+        elif (self.d_total[0] == 21 and self.p_total[0] == 21):
             self.push()
             self.p_bj = False
         else:
@@ -115,47 +113,23 @@ class Game:
                 print(cards, end=' | ')
         print()
 
-    def set_totals(self):
+    def set_totals(self, hand, total):
         """ Setter Method for both dealer and player card totals """
-        self.p_total = 0
-        self.d_total = 0
-        self.p_soft_total = 0
-        self.d_soft_total = 0
-
-        for cards in self.p_cards:
-            temp = 0
-            temp2 = 0
-            if cards[0] == 'K' or cards[0] == 'Q' or cards[0] == 'J' or len(cards) == 7:
-                temp = 10
-                temp2 = 10
-
-            elif cards[0] == 'A':
-                temp = 11
-                temp2 = 1
+        total[0] = 0
+        total[1] = 0
+        for card in hand:
+            if card[0] in {'J', 'K', 'Q', '1'}:
+                total[0] += 10
+                total[1] += 10
+            elif card[0] in 'A':
+                total[0] += 11
+                total[1] += 1
             else:
-                temp = int(cards[0])
-                temp2 = int(cards[0])
-            self.p_total += temp
-            self.p_soft_total += temp2
+                total[0] += int(card[0])
+                total[1] += int(card[0])
 
-            if self.p_total > 21 and self.p_soft_total <= 21:
-                self.p_total = self.p_soft_total #is it needed?
-
-        for cards in self.d_cards:
-            temp = 0
-            temp2 = 0
-            if cards[0] == 'K' or cards[0] == 'Q' or cards[0] == 'J' or len(cards) == 7:
-                temp = 10
-                temp2 = 10
-
-            elif cards[0] == 'A':
-                temp = 11
-                temp2 = 1
-            else:
-                temp = int(cards[0])
-                temp2 = int(cards[0])
-            self.d_total += temp
-            self.d_soft_total += temp2
+            if total[0] > 21 >= total[1]:
+                total[0] = total[1]
 
 
     def end_hand(self):
@@ -165,91 +139,78 @@ class Game:
         self.p_can_double = True
         self.p_cards = []
         self.d_cards = []
-        self.p_total = 0
-        self.d_total = 0
-        self.p_soft_total = 0
-        self.d_soft_total = 0
+        self.p_total[0] = 0
+        self.p_total[1] = 0
+        self.d_total[0] = 0
+        self.d_total[1] = 0
         self.p_bet = 0
 
     def player_hit(self):
         """ Player hits for a card """
-        if len(self.deck1.cards) == 0:
-            self.dealer_shuffle()
-
         self.p_cards.append(self.deck1.cards.pop())
-        self.set_totals()
-        if self.check_bust() is True:
+        self.set_totals(self.p_cards, self.p_total)
+
+        if self.check_bust(self.p_total): #player busted, dealer won
             self.dealer_win()
         else:
             self.print_visible_cards()
-            #self.print_totals()
 
 
     def player_stand(self):
         """ Player stands and keeps current total """
         self.face_down = False
-        self.check_bust_d()      # two or twelve for double Aces?
         self.print_visible_cards()
         self.print_totals()
-        while (self.d_total < 17 and self.d_soft_total <= 17):
-            if len(self.deck1.cards) == 0:
-                self.dealer_shuffle()
+        self.set_totals(self.p_cards,self.p_total)
+
+        #this is where the dealer plays out his hand
+        while (self.d_total[0] < 17 and self.d_total[1] <= 17):
             self.d_cards.append(self.deck1.cards.pop())
-            self.set_totals()
-            self.check_bust_d()
+            self.set_totals(self.d_cards,self.d_total)
             self.print_visible_cards()
             self.print_totals()
-
-        self.check_winner()
+        if self.check_bust(self.d_total):
+            self.player_win()
+        else:
+            self.check_winner()
 
     def print_totals(self):
         """Prints the totals of the player and dealer hand """
-        print("Player Total: " + str(self.p_total))
-        if self.p_total != self.p_soft_total:
-            print("Player Soft Total: " + str(self.p_soft_total))
-        if self.face_down == False:
-            print("Dealer Total: " + str(self.d_total))
-            if self.d_total != self.d_soft_total:
-                print("Dealer Soft Total: " + str(self.d_soft_total))
+        print("Player Total: " + str(self.p_total[0]))
+        if self.p_total[0] != self.p_total[1]:
+            print("Player Soft Total: " + str(self.p_total[1]))
+        if not self.face_down:
+            print("Dealer Total: " + str(self.d_total[0]))
+            if self.d_total[0] != self.d_total[1]:
+                print("Dealer Soft Total: " + str(self.d_total[1]))
 
-    def check_bust(self):
+    def check_bust(self, total):
         """ Function returns True if the player has busted """
-        player_busted = False
+        busted = False
 
-        if self.p_total > 21 and self.p_soft_total > 21:
-            player_busted = True
+        if total[0] > 21 and total[1] > 21:
+            busted = True
 
-        return player_busted
-
-    def check_bust_d(self):
-        """ Function returns True if the dealer has busted """
-        dealer_busted = False
-
-        if self.d_total > 21 and self.d_soft_total > 21:
-            dealer_busted = True
-
-        return dealer_busted
-
+        return busted
 
 
     def check_winner(self):
-        """ Determine the winner and call appropriate function for winner """
-        if (self.check_bust() is False and self.p_total > self.d_total):
+        """ Determine the winner and call appropriate function for winner
+            If the player busted during hitting, dealer_win is already called
+            If the dealer busts during hitting, player_win is already called
+        """
+        if self.p_total[0] > self.d_total[0]: #players total is higher, player wins
             self.player_win()
-        elif (self.check_bust_d() is False and self.d_total > self.p_total):
+        elif self.d_total[0] > self.p_total[0]: #dealers total is higher, dealer wins
             self.dealer_win()
-        elif (self.check_bust() is False and self.check_bust_d() == False and self.p_total == self.d_total):
+        elif self.p_total[0] == self.d_total[0]: #totals equal, push
             self.push()
-        elif (self.check_bust() is False and self.check_bust_d() == True):
-            self.player_win()
-        elif (self.check_bust() is True and self.check_bust_d() == False):
-            self.dealer_win()
         else:
-            print("Winner undeterminable. . . .")
+            print("This should not run, but just in case. . .")
             self.end_hand()
 
     def player_win(self):
-        """ The player has won, pay player at 1 to 1 or blackjack odds 
+        """ The player has won, pay player at 1 to 1 or blackjack odds
             Also returns the original wager deduces from player's money
         """
         print("============== YOU WIN ==============")
@@ -280,14 +241,14 @@ class Game:
 
 #Start Game
 g = Game()
-playing = True
+PLAYING = True
 
-while playing:
+while PLAYING:
     if g.p_money > 0:
 
         g.bet()
         g.deal()
-        while g.hand_end == False:
+        while not g.hand_end:
             try:
                 choice = int(input("| 1 to Hit | 2 to Stand | : "))
                 if choice == 1:
@@ -305,9 +266,9 @@ while playing:
                 print("You did not enter a number; try again")
 
         if i != 1:
-            playing = False
-    else:
-        playing = False
+            PLAYING = False
+    else: #ran out of money
+        PLAYING = False
 
 
 
