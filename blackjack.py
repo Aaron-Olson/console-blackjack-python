@@ -64,9 +64,19 @@ class Game:
 
 
     def bet(self):
-        """Input player's Wager, deduce from players total """
+        """Input player's Wager, deduct from players total """
         print("Your cash: $" + str(self.p_money))
-        self.p_bet = int(input("| Enter bet for this hand | : $"))
+        while True:
+            try:
+                self.p_bet = int(input("| Enter bet for this hand | : $"))
+                if self.p_bet <= 0:
+                    print("Bet must be greater than $0. Try again.")
+                elif self.p_bet > self.p_money:
+                    print(f"You don't have enough money. Maximum bet: ${self.p_money}")
+                else:
+                    break
+            except ValueError:
+                print("Please enter a valid number.")
         self.p_money -= self.p_bet
 
 
@@ -118,7 +128,7 @@ class Game:
         total[0] = 0
         total[1] = 0
         for card in hand:
-            if card[0] in {'J', 'K', 'Q', '1'}:
+            if card[0] in {'J', 'K', 'Q'} or card.startswith('10'):
                 total[0] += 10
                 total[1] += 10
             elif card[0] in 'A':
@@ -211,12 +221,14 @@ class Game:
 
     def player_win(self):
         """ The player has won, pay player at 1 to 1 or blackjack odds
-            Also returns the original wager deduces from player's money
+            Also returns the original wager deducted from player's money
         """
         print("============== YOU WIN ==============")
         if self.p_bj:
-            self.p_money += 1.5 * self.p_bet
+            # Blackjack pays 3:2 - return original bet plus 1.5x winnings
+            self.p_money += self.p_bet + (1.5 * self.p_bet)
         else:
+            # Regular win pays 1:1 - return original bet plus equal winnings
             self.p_money += self.p_bet * 2
         self.end_hand()
 
